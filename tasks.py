@@ -14,7 +14,7 @@ async def mainpage():
     return Response(content='<h2>Здравствуйте! Введите в строке reg или login</h2>', media_type='text/html')
 
 @router.post('/reg')
-async def register(name=Query(), password=Query(), db:AsyncSession=Depends(get_db)):
+async def register(name=Form(), password=Form(), db:AsyncSession=Depends(get_db)):
     result=(await db.execute(select(User).filter(User.name==name))).first()
     if result:
         raise HTTPException(400,'Такой пользователь уже есть')
@@ -23,7 +23,7 @@ async def register(name=Query(), password=Query(), db:AsyncSession=Depends(get_d
     await db.commit()
 
 @router.post('/login')
-async def login(name=Query(), password=Query(), db:AsyncSession=Depends(get_db)):
+async def login(name=Form(), password=Form(), db:AsyncSession=Depends(get_db)):
     result=(await db.execute(select(User).filter(User.name==name))).first()
     if not(result):
         raise HTTPException(400,'Такого пользователя нет!')
