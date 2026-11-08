@@ -1,4 +1,4 @@
-from fastapi import APIRouter,Depends,Cookie,Query,HTTPException
+from fastapi import APIRouter,Depends,Cookie,Query,HTTPException,Form,Body
 from fastapi.responses import Response,FileResponse, RedirectResponse
 from models import *
 from database import get_db
@@ -66,14 +66,14 @@ async def listSHOW(token=Cookie(), db:AsyncSession=Depends(get_db)):
         txt.append({'id':i.id, 'text':i.title})
     return txt
 
-@router.delete('/delete')
-async def delet(name=Query(), token=Cookie(), db:AsyncSession=Depends(get_db)):
+@router.delete('/delete/id')
+async def delet(id:int, token=Cookie(), db:AsyncSession=Depends(get_db)):
     result=(await db.execute(select(User).filter(User.name==get_name(token)).options(selectinload(User.tasks)))).first()
     if not(result):
         raise HTTPException(400,'Такого пользователя нет!')
     user=result[0]
     for i in user.tasks:
-        if i.title==name:
+        if i.id==id:
             await db.delete(i)
             await db.commit()
             return RedirectResponse('/mainpage',status_code=303)
