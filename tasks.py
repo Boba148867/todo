@@ -53,7 +53,8 @@ async def add(token=Cookie(), db:AsyncSession=Depends(get_db), data=Body()):
     target=Task(title=data['task'],user_id=user.id )
     db.add(target)
     await db.commit()
-    return RedirectResponse('/mainpage',status_code=303)
+    await db.refresh(target)
+    return {'id':target.id,'title':target.title}
 
 @router.get('/tasks')
 async def listSHOW(token=Cookie(), db:AsyncSession=Depends(get_db)):
