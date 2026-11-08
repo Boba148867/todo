@@ -173,7 +173,7 @@
                 const res = await fetch('/add', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({task: text})
+                    body: JSON.stringify({'task': text})
                 });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const task = await res.json();   // {id, text}
