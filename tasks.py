@@ -41,8 +41,8 @@ async def login(name=Form(), password=Form(), db:AsyncSession=Depends(get_db)):
     return response
 
 @router.get('/mainpage')
-async def mainpag(token=Cookie()):
-    return Response('<h2>Для добавления задачи ведите /add?name=...<br>Для просмотра введите /list</h2>', media_type='text/html')
+async def mainpage(token=Cookie()):
+    return FileResponse('mainpage.html')
 
 @router.post('/add')
 async def add(token=Cookie(), db:AsyncSession=Depends(get_db), name=Query()):
@@ -53,17 +53,18 @@ async def add(token=Cookie(), db:AsyncSession=Depends(get_db), name=Query()):
     target=Task(title=name,user_id=user.id )
     db.add(target)
     await db.commit()
+    return RedirectResponse('/mainpage',status_code=303)
 
-@router.get('/list')
+@router.get('/tasks')
 async def listSHOW(token=Cookie(), db:AsyncSession=Depends(get_db)):
     result=(await db.execute(select(User).filter(User.name==get_name(token)).options(selectinload(User.tasks)))).first()
     if not(result):
         raise HTTPException(400,'Такого пользователя нет!')
     user=result[0]
-    txt=''
+    txt=[]
     for i in user.tasks:
-        txt+=f'<br>{i.title}<br>'
-    return Response(txt, media_type='text/html')
+        txt.append({'id':i.id, 'text':i.title})
+    return txt
 
 @router.delete('/delete')
 async def delet(name=Query(), token=Cookie(), db:AsyncSession=Depends(get_db)):
@@ -75,4 +76,4 @@ async def delet(name=Query(), token=Cookie(), db:AsyncSession=Depends(get_db)):
         if i.title==name:
             await db.delete(i)
             await db.commit()
-            return {'status':'success'}
+            return RedirectResponse('/mainpage',status_code=303)
