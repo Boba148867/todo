@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Регистрация</title>
+
+    </head>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: white;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+        }
+    
+        .frame{
+            border: 20px solid #003801;
+            padding: 12px 24px;
+            text-align: center;
+
+        }
+
+        h1{
+            color: #003801;
+        }
+
+        h2{
+            color: #003801;
+        }
+
+        h3{
+            color: #003801;
+        }
+
+        .container{
+            background-color: white;
+            text-align: center;
+            min-width: 40%;
+            height: auto;
+            padding: 12px 12px;
+            border-radius: 0%;
+        }
+
+        .ots{
+            padding: 8px 12px;
+        }
+
+        button{
+            border-radius: 1%;
+            background-color:#003801;
+            color: white;
+            font-size: 24px;
+            stroke-color: white;
+            font-family: 'Courier New', monospace;
+        }
+        input{
+            color: #003801;
+            background-color: white;
+        }
+
+        a{
+            color: #003801;
+        }
+    </style>
+    <div class="frame">
+        <h1>Добро пожаловать!</h1>
+        <div class="container">
+            <form action="/reg" method="POST" id="loginForm">
+                <h2>Логин</h2>
+                <input name="name" placeholder="Имя" required>
+                <p></p>
+                <h2>Пароль</h2>
+                <input name="password" type="password" placeholder="Пароль" required>
+                <p></p>
+                <button type="submit">Войти</button>
+            </form>
+            <p></p>
+            <a href="/">Логин</a>
+        </div>
+    </div>
+    <p></p>
+    <script>
+    </script>
+</html>
