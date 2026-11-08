@@ -45,12 +45,12 @@ async def mainpage(token=Cookie()):
     return FileResponse('mainpage.html')
 
 @router.post('/add')
-async def add(token=Cookie(), db:AsyncSession=Depends(get_db), name=Form()):
+async def add(token=Cookie(), db:AsyncSession=Depends(get_db), data=Body()):
     result=(await db.execute(select(User).filter(User.name==get_name(token)))).first()
     if not(result):
         raise HTTPException(400,'Такого пользователя нет!')
     user=result[0]
-    target=Task(title=name,user_id=user.id )
+    target=Task(title=data['task'],user_id=user.id )
     db.add(target)
     await db.commit()
     return RedirectResponse('/mainpage',status_code=303)
