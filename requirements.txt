@@ -1,0 +1,4 @@
+fastapi
+sqlalchemy[asyncio]
+uvicorn[standard]
+python-jose[cryptography]
