@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToDo App</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: white;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+        }
+
+        .frame {
+            border: 20px solid #003801;
+            padding: 12px 24px;
+            text-align: center;
+        }
+
+        h1, h2, h3 {
+            color: #003801;
+        }
+
+        .container {
+            background-color: white;
+            text-align: center;
+            min-width: 40%;
+            height: auto;
+            padding: 12px 12px;
+            border-radius: 0%;
+        }
+
+        .ots {
+            padding: 8px 12px;
+        }
+
+        button {
+            border-radius: 1%;
+            background-color: #003801;
+            color: white;
+            font-size: 24px;
+            font-family: 'Courier New', monospace;
+            border: none;
+            cursor: pointer;
+            padding: 4px 16px;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        input {
+            color: #003801;
+            background-color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            border: 2px solid #003801;
+            padding: 4px 8px;
+        }
+
+        a {
+            color: #003801;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+        }
+
+        li {
+            color: #003801;
+            font-size: 20px;
+            padding: 6px 0;
+            border-bottom: 1px dashed #003801;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        li .task-text {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .del {
+            font-size: 16px;
+            padding: 2px 10px;
+            flex-shrink: 0;
+        }
+
+        #status {
+            color: #003801;
+            font-size: 14px;
+            min-height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="frame">
+        <div class="container">
+            <h1>ToDo</h1>
+            <h3>Список дел</h3>
+
+            <form id="addForm">
+                <div class="ots">
+                    <input type="text" name="task" id="taskInput" placeholder="Новая задача..." required>
+                </div>
+                <div class="ots">
+                    <button type="submit">Принять</button>
+                </div>
+            </form>
+
+            <h2>Задачи</h2>
+            <div id="status"></div>
+            <ul id="taskList"><!-- заполняется из /tasks --></ul>
+        </div>
+    </div>
+
+    <script>
+        const list   = document.getElementById('taskList');
+        const form   = document.getElementById('addForm');
+        const input  = document.getElementById('taskInput');
+        const status = document.getElementById('status');
+
+        // ---- 1. Загрузка задач с ОТДЕЛЬНОГО эндпоинта GET /tasks ----
+        async function loadTasks() {
+            status.textContent = 'Загрузка...';
+            try {
+                const res = await fetch('/tasks');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const tasks = await res.json();   // [{id, text}, ...]
+
+                list.innerHTML = '';
+                tasks.forEach(t => list.appendChild(createTaskElement(t.id, t.text)));
+                status.textContent = tasks.length ? '' : 'Пока задач нет';
+            } catch (err) {
+                status.textContent = 'Ошибка загрузки: ' + err.message;
+            }
+        }
+
+        // ---- 2. Построение <li> с кнопкой удаления ----
+        function createTaskElement(id, text) {
+            const li = document.createElement('li');
+            li.dataset.id = id;
+
+            const span = document.createElement('span');
+            span.className = 'task-text';
+            span.textContent = text;
+
+            const btn = document.createElement('button');
+            btn.className = 'del';
+            btn.textContent = 'Удалить';
+            btn.addEventListener('click', () => deleteTask(id));
+
+            li.appendChild(span);
+            li.appendChild(btn);
+            return li;
+        }
+
+        // ---- 3. Добавление через POST /add ----
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = input.value.trim();
+            if (!text) return;
+
+            try {
+                const res = await fetch('/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({task: text})
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const task = await res.json();   // {id, text}
+
+                list.appendChild(createTaskElement(task.id, task.text));
+                input.value = '';
+                status.textContent = '';
+            } catch (err) {
+                status.textContent = 'Ошибка добавления: ' + err.message;
+            }
+        });
+
+        // ---- 4. Удаление через POST /delete/<id> ----
+        async function deleteTask(id) {
+            try {
+                const res = await fetch('/delete/' + id, {method: 'POST'});
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const li = list.querySelector('li[data-id="' + id + '"]');
+                if (li) li.remove();
+                if (!list.children.length) status.textContent = 'Пока задач нет';
+            } catch (err) {
+                status.textContent = 'Ошибка удаления: ' + err.message;
+            }
+        }
+
+        // ---- 5. Старт ----
+        loadTasks();
+    </script>
+</body>
+</html>
