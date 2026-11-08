@@ -1,4 +1,10 @@
-fastapi
+aiosqlite
+asyncpg
+psycopg
 sqlalchemy[asyncio]
 uvicorn[standard]
 python-jose[cryptography]
+fastapi
+python-multipart
+pytest-asyncio
+psycopg2-binary
