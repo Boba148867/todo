@@ -45,7 +45,7 @@ async def mainpage(token=Cookie()):
     return FileResponse('mainpage.html')
 
 @router.post('/add')
-async def add(token=Cookie(), db:AsyncSession=Depends(get_db), name=Query()):
+async def add(token=Cookie(), db:AsyncSession=Depends(get_db), name=Form()):
     result=(await db.execute(select(User).filter(User.name==get_name(token)))).first()
     if not(result):
         raise HTTPException(400,'Такого пользователя нет!')
