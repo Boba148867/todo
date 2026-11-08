@@ -1,5 +1,5 @@
 from fastapi import APIRouter,Depends,Cookie,Query,HTTPException
-from fastapi.responses import *
+from fastapi.responses import Response,FileResponse, RedirectResponse
 from models import *
 from database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,9 +10,13 @@ from auth import create_token,get_name
 router=APIRouter()
 
 @router.get('/')
-async def mainpage():
-    return Response(content='<h2>Здравствуйте! Введите в строке reg или login</h2>', media_type='text/html')
+async def log():
+    return FileResponse('login.html')
 
+@router.get('/register')
+async def register():
+    return FileResponse('register.html')
+    
 @router.post('/reg')
 async def register(name=Form(), password=Form(), db:AsyncSession=Depends(get_db)):
     result=(await db.execute(select(User).filter(User.name==name))).first()
@@ -21,6 +25,7 @@ async def register(name=Form(), password=Form(), db:AsyncSession=Depends(get_db)
     target=User(name=name, password=password)
     db.add(target)
     await db.commit()
+    return RedirectResponse('/', status_code=303)
 
 @router.post('/login')
 async def login(name=Form(), password=Form(), db:AsyncSession=Depends(get_db)):
