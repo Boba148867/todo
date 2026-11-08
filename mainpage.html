@@ -189,7 +189,7 @@
         // ---- 4. Удаление через POST /delete/<id> ----
         async function deleteTask(id) {
             try {
-                const res = await fetch('/delete/' + id, {method: 'POST'});
+                const res = await fetch('/delete/' + id, {method: 'DELETE'});
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const li = list.querySelector('li[data-id="' + id + '"]');
                 if (li) li.remove();
