@@ -67,7 +67,7 @@ async def listSHOW(token=Cookie(), db:AsyncSession=Depends(get_db)):
         txt.append({'id':i.id, 'text':i.title})
     return txt
 
-@router.delete('/delete/id')
+@router.delete('/delete/{id}')
 async def delet(id:int, token=Cookie(), db:AsyncSession=Depends(get_db)):
     result=(await db.execute(select(User).filter(User.name==get_name(token)).options(selectinload(User.tasks)))).first()
     if not(result):
