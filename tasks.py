@@ -3,9 +3,10 @@ from fastapi.responses import Response,FileResponse, RedirectResponse
 from models import *
 from database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select,text
 from sqlalchemy.orm import selectinload
 from auth import create_token,get_name
+from datetime import datetime
 
 router=APIRouter()
 
@@ -50,7 +51,7 @@ async def add(token=Cookie(), db:AsyncSession=Depends(get_db), data=Body()):
     if not(result):
         raise HTTPException(400,'Такого пользователя нет!')
     user=result[0]
-    target=Task(title=data['task'],user_id=user.id )
+    target=Task(title=data['task'],user_id=user.id, created_at=datetime.now().strftime('%Y-%M-%d'))
     db.add(target)
     await db.commit()
     await db.refresh(target)
@@ -78,3 +79,18 @@ async def delet(id:int, token=Cookie(), db:AsyncSession=Depends(get_db)):
             await db.delete(i)
             await db.commit()
             return RedirectResponse('/mainpage',status_code=303)
+
+@router.get('/statictics')
+async def get_stats(token=Cookie(), db:AyncSession=Depends(get_db)):
+    result=(await db.execute(select(User).filter(User.name==get_name(token)).options(selectinload(User.tasks)))).first()
+    if not(result):
+        raise HTTPException(400,'Такого пользователя нет!')
+    user=result[0]
+    data=await db.execute(text(f'''
+    SELECT COUNT(*), created_at from tasks
+    GROUP BY created_at
+    ''')).all()
+    stats={}
+    for i in data:
+        stats.update({i[1]:i[0]})
+    return stats
