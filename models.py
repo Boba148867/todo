@@ -15,7 +15,7 @@ class Task(Base):
     __tablename__='tasks'
     id=Column(Integer, primary_key=True)
     title=Column(String)
-    created_at=Column(Datetime, default=func.now())
+    created_at=Column(String)
     user_id=Column(Integer, ForeignKey('users.id'))
 
     user=relationship('User',back_populates='tasks')
