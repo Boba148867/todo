@@ -99,6 +99,61 @@
             font-size: 14px;
             min-height: 18px;
         }
+
+        /* ---- Статистика по датам ---- */
+        #statsSection {
+            margin-top: 24px;
+        }
+
+        #statsList {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            margin-top: 8px;
+        }
+
+        #statsList li {
+            color: #003801;
+            font-size: 18px;
+            padding: 8px 10px;
+            border: 2px solid #003801;
+            border-bottom: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #statsList li:last-child {
+            border-bottom: 2px solid #003801;
+        }
+
+        #statsList li:nth-child(even) {
+            background-color: #f2f7f2;
+        }
+
+        #statsList .date {
+            font-weight: bold;
+        }
+
+        #statsList .count {
+            background-color: #003801;
+            color: white;
+            padding: 2px 12px;
+            font-size: 16px;
+        }
+
+        #statsStatus {
+            color: #003801;
+            font-size: 14px;
+            min-height: 18px;
+            margin-bottom: 4px;
+        }
+
+        .refresh-btn {
+            font-size: 16px;
+            padding: 4px 14px;
+        }
     </style>
 </head>
 <body>
@@ -119,16 +174,30 @@
             <h2>Задачи</h2>
             <div id="status"></div>
             <ul id="taskList"><!-- заполняется из /tasks --></ul>
+
+            <!-- ---- Статистика: сколько задач добавлено в каждый день ---- -->
+            <div id="statsSection">
+                <h2>Добавлено по датам</h2>
+                <div id="statsStatus"></div>
+                <div class="ots">
+                    <button type="button" class="refresh-btn" id="refreshStatsBtn">Обновить статистику</button>
+                </div>
+                <ul id="statsList"><!-- заполняется из /statistics --></ul>
+            </div>
         </div>
     </div>
 
     <script>
-        const list   = document.getElementById('taskList');
-        const form   = document.getElementById('addForm');
-        const input  = document.getElementById('taskInput');
-        const status = document.getElementById('status');
+        const list        = document.getElementById('taskList');
+        const form        = document.getElementById('addForm');
+        const input       = document.getElementById('taskInput');
+        const status      = document.getElementById('status');
 
-        // ---- 1. Загрузка задач с ОТДЕЛЬНОГО эндпоинта GET /tasks ----
+        const statsList   = document.getElementById('statsList');
+        const statsStatus = document.getElementById('statsStatus');
+        const refreshBtn  = document.getElementById('refreshStatsBtn');
+
+        // ---- 1. Загрузка задач с GET /tasks ----
         async function loadTasks() {
             status.textContent = 'Загрузка...';
             try {
@@ -181,12 +250,14 @@
                 list.appendChild(createTaskElement(task.id, task.text));
                 input.value = '';
                 status.textContent = '';
+
+                loadStats();
             } catch (err) {
                 status.textContent = 'Ошибка добавления: ' + err.message;
             }
         });
 
-        // ---- 4. Удаление через POST /delete/<id> ----
+        // ---- 4. Удаление через DELETE /delete/<id> ----
         async function deleteTask(id) {
             try {
                 const res = await fetch('/delete/' + id, {method: 'DELETE'});
@@ -194,13 +265,70 @@
                 const li = list.querySelector('li[data-id="' + id + '"]');
                 if (li) li.remove();
                 if (!list.children.length) status.textContent = 'Пока задач нет';
+
+                loadStats();
             } catch (err) {
                 status.textContent = 'Ошибка удаления: ' + err.message;
             }
         }
 
-        // ---- 5. Старт ----
+        // ---- 5. Статистика по датам с GET /statistics ----
+        // Ожидаемый формат ответа: { "2026-11-10": 3, "2026-11-09": 5 } 
+        // либо [{"date": "2026-11-10", "count": 3}, ...]
+        async function loadStats() {
+            statsStatus.textContent = 'Загрузка статистики...';
+            try {
+                const res = await fetch('/statistics');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+
+                // нормализуем к массиву [{date, count}]
+                let rows;
+                if (Array.isArray(data)) {
+                    rows = data.map(r => ({date: r.date, count: r.count}));
+                } else {
+                    rows = Object.entries(data).map(([date, count]) => ({date, count}));
+                }
+
+                // сортируем по дате по убыванию (свежие сверху)
+                rows.sort((a, b) => b.date.localeCompare(a.date));
+
+                statsList.innerHTML = '';
+                if (!rows.length) {
+                    statsStatus.textContent = 'Статистики пока нет';
+                    return;
+                }
+
+                rows.forEach(r => {
+                    const li = document.createElement('li');
+
+                    const dateSpan = document.createElement('span');
+                    dateSpan.className = 'date';
+                    dateSpan.textContent = r.date;
+
+                    const countSpan = document.createElement('span');
+                    countSpan.className = 'count';
+                    countSpan.textContent = r.count + ' шт.';
+
+                    li.appendChild(dateSpan);
+                    li.appendChild(countSpan);
+                    statsList.appendChild(li);
+                });
+
+                const total = rows.reduce((s, r) => s + r.count, 0);
+                statsStatus.textContent = 'Всего добавлено: ' + total + ' (по ' + rows.length + ' дн.)';
+            } catch (err) {
+                statsStatus.textContent = 'Ошибка загрузки статистики: ' + err.message;
+                statsList.innerHTML = '';
+            }
+        }
+
+        // ---- 6. Кнопка обновления ----
+        refreshBtn.addEventListener('click', loadStats);
+
+        // ---- 7. Старт ----
         loadTasks();
+        loadStats();
     </script>
 </body>
 </html>
