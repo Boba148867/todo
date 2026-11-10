@@ -80,7 +80,7 @@ async def delet(id:int, token=Cookie(), db:AsyncSession=Depends(get_db)):
             await db.commit()
             return RedirectResponse('/mainpage',status_code=303)
 
-@router.get('/statictics')
+@router.get('/statistics')
 async def get_stats(token=Cookie(), db:AyncSession=Depends(get_db)):
     result=(await db.execute(select(User).filter(User.name==get_name(token)).options(selectinload(User.tasks)))).first()
     if not(result):
